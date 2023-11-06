@@ -1,3 +1,9 @@
+mod parse;
+
 fn main() {
-    println!("{}", "Hello World")
+    let (reverse, debug, filename, title) = parse::arguments();
+    println!("Reverse: {}", reverse);
+    println!("Debug: {}", debug);
+    println!("Filename: {}", filename);
+    println!("Title: {}", title);
 }

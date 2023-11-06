@@ -1,22 +1,29 @@
 use std::env;
 use std::process::exit;
 
+pub struct Config {
+    pub reverse: bool,
+    pub debug: bool,
+    pub filename: String,
+    pub title: String
+}
 
-pub fn arguments() -> (bool, bool, String, String) {
+
+pub fn arguments() -> Config {
     let args: Vec<String> = env::args().collect();
 
     let usage = format!(
         "flags:\n\
         \treverse:{}Generate release notes in reverse order\n\
-        \tdebug:{}Enable debug mode for detailed logging\n\n\
+        \tdebug:{}Enable debug mode for detailed logging\n\
+        \tversion:{}Get version of the package\n\n\
         arguments:\n\
-        \t-v / --version{}Get version of the package\n\
         \t-f / --filename{}Filename where the release notes should be stored\n\
         \t-t / --title{}Title under which the release notes should be stored",
-        " ".repeat(6), " ".repeat(8),
-        " ".repeat(8), " ".repeat(7), " ".repeat(10)
+        " ".repeat(6), " ".repeat(8), " ".repeat(8),
+        " ".repeat(7), " ".repeat(10)
     );
-    if args.len() < 2 {
+    if args.len() < 1 {
         // If no arguments are provided, display usage instructions
         println!("Usage: {} [OPTIONS]\n\n{}", args[0], usage);
         exit(1)
@@ -39,7 +46,7 @@ pub fn arguments() -> (bool, bool, String, String) {
             "reverse" => {
                 reverse = true;
             }
-            "--version" | "-v" => {
+            "version" => {
                 version = true;
             }
             "--filename" | "-f" => {
@@ -68,8 +75,22 @@ pub fn arguments() -> (bool, bool, String, String) {
         i += 1;
     }
     if version {
-        println!("Version: 1.0");
+        const PKG_NAME: &str = env!("CARGO_PKG_NAME");
+        const VERSION: &str = env!("CARGO_PKG_VERSION");
+        println!("{} {}", PKG_NAME, VERSION);
         exit(0)
     }
-    return (reverse, debug, filename, title);
+    if filename.is_empty() {
+        filename = "release_notes.rst".to_string()
+    }
+    if title.is_empty() {
+        title = "Release Notes".to_string()
+    }
+    let config = Config {
+        reverse,
+        debug,
+        filename,
+        title
+    };
+    return config;
 }

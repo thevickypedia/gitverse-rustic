@@ -1,18 +1,34 @@
 use std::process::{Command, Stdio};
-use log::debug;
 
-pub fn run(command: &str) -> bool {
+use log::{debug, error};
+
+pub fn run(command: &str) -> String {
     let output = Command::new("sh")  // invoke a shell
         .arg("-c")  // execute command as interpreted by program
         .arg(command)  // run the command
-        .stdout(Stdio::null())  // Redirect stdout to /dev/null
+        .stdout(Stdio::piped())  // Redirect stdout to /dev/null
         .stderr(Stdio::null())  // Redirect stderr to /dev/null
-        .status()  // check for status
+        .output()  // Capture both stdout and stderr
         .expect("Failed to execute command");
-    if output.success() {
-        true
-    } else {
-        debug!("Command failed with an error code: {:?}", output.code());
-        false
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    let exit_code = output.status.code(); // Option<i32>
+    match exit_code {
+        Some(0) => {
+            debug!("Command '{}' executed successfully", command);
+            return stdout.to_string();
+        }
+        Some(code) => {
+            error!("Command failed with exit code: {}", code);
+            error!("Standard Output: {}", stdout);
+            error!("Standard Error: {}", stderr);
+        }
+        None => {
+            error!("Command failed, but couldn't retrieve exit code");
+            error!("Standard Output: {}", stdout);
+            error!("Standard Error: {}", stderr);
+        }
     }
+    return "FAILED".to_string();
 }

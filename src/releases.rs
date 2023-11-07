@@ -30,29 +30,29 @@ pub fn get_api_releases() -> HashMap<String, Vec<String>> {
     }
     let owner = origin_info[0];
     let repo = origin_info[1];
-    let client = reqwest::blocking::ClientBuilder::new().user_agent("rustc");
+    let mut client = reqwest::blocking::ClientBuilder::new().user_agent("rustc");
     let gh_token = env::var("GIT_TOKEN")
         .unwrap_or(env::var("git_token")
             .unwrap_or("".to_string()));
-    let client = if !gh_token.is_empty() {
+    if !gh_token.is_empty() {
         debug!("Loading bearer auth with git token");
         let mut headers = reqwest::header::HeaderMap::new();
         headers.insert(reqwest::header::AUTHORIZATION,
                        reqwest::header::HeaderValue::from_str(&format!("Bearer {}", gh_token)).unwrap());
-        client.default_headers(headers)
+        client = client.default_headers(headers)
     } else {
         warn!("Trying to collect release notes without github token");
-        client
-    };
+    }
     let url = format!("https://api.github.com/repos/{}/{}/releases", owner, repo);
-    let request = client.build();
-    let response = request.unwrap().get(&url).send();
+    let response = client.build().unwrap().get(&url).send();
     match response {
-        Ok(ref ok) => {  // borrow the binding pattern todo: add it to notes.md
-            let status_code = ok.status().as_u16();
-            if status_code == 200 {
+        Ok(result) => {
+            let status = result.status();
+            if status.as_u16() == 200 {
                 // we need the keys, name and body (split by lines)
-                println!("{:?}", response.unwrap().text())
+                println!("{:?}", result.text())
+            } else {
+                println!("Status::{}", status)
             }
         }
         Err(error) => {

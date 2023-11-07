@@ -23,11 +23,11 @@ fn generate_release_notes(config: Config) {
         env_logger::init();
     }
     let fetch = git::run("git fetch origin refs/tags/*:refs/tags/* --prune");
-    if fetch == "FAILED".to_string() {
+    if fetch.is_none() {
         warn!("Failed to fetch tags");
     }
     let pull = git::run("git pull");
-    if pull == "FAILED".to_string() {
+    if pull.is_none() {
         warn!("Failed to git pull");
     }
     let tags = snippets::generate().unwrap();

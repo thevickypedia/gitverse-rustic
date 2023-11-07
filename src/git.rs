@@ -2,7 +2,7 @@ use std::process::{Command, Stdio};
 
 use log::{debug, error};
 
-pub fn run(command: &str) -> String {
+pub fn run(command: &str) -> Option<String> {
     let result = Command::new("sh")  // invoke a shell
         .arg("-c")  // execute command as interpreted by program
         .arg(command)  // run the command
@@ -17,7 +17,7 @@ pub fn run(command: &str) -> String {
             match exit_code {
                 Some(0) => {
                     debug!("Command '{}' executed successfully", command);
-                    return stdout.to_string();
+                    return Some(stdout.to_string());
                 }
                 Some(code) => {
                     error!("Command '{}' failed with exit code: {}", command, code);
@@ -31,8 +31,7 @@ pub fn run(command: &str) -> String {
         }
         Err(error) => {
             error!("{}", error);
-            return "FAILED".to_string();
         }
     }
-    return "FAILED".to_string();
+    return None;
 }

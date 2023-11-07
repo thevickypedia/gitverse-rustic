@@ -48,14 +48,15 @@ pub fn get_api_releases() -> Option<HashMap<String, Vec<String>>> {
     let origin = git::run(
         r"git config --get remote.origin.url | sed 's/.*\/\([^ ]*\/[^.]*\).*/\1/'"
     );
-    if origin.is_empty() {
+    if origin.is_none() {
+        return None;
+    }
+    let bind_origin = origin.unwrap();
+    if bind_origin.is_empty() {
         warn!("Unable to get origin for current repository");
         return None;
     }
-    if origin == "FAILED".to_string() {
-        return None;
-    }
-    let origin_info: Vec<&str> = origin.trim().split("/").collect();
+    let origin_info: Vec<&str> = bind_origin.trim().split("/").collect();
     if origin_info.len() != 2 {
         return None;
     }

@@ -1,21 +1,22 @@
 use std::collections::HashMap;
 
 use chrono::NaiveDateTime;
-use log::{error, warn};
+use log::warn;
 
 use git;
 
 pub fn generate() -> Option<Vec<HashMap<String, String>>> {
     let dates_values = git::run("git tag --format '%(refname:short)||%(creatordate:format:%s)'");
-    if dates_values.is_empty() {
+    if dates_values.is_none() {
+        return None;
+    }
+    let bind_date_values = dates_values.unwrap();
+    if bind_date_values.is_empty() {
         warn!("No tags found for repository!!");
         return None;
     }
-    if dates_values == "FAILED".to_string() {
-        return None;
-    }
     let mut snippet: Vec<HashMap<String, String>> = Vec::new();
-    for line in dates_values.split("\n") {
+    for line in bind_date_values.split("\n") {
         if line.trim().is_empty() {
             continue;
         }
@@ -32,16 +33,17 @@ pub fn generate() -> Option<Vec<HashMap<String, String>>> {
         let date = datetime.unwrap().format("%m/%d/%Y").to_string();
         let command = format!("git tag -l -n99 {}", tag_name);
         let notes = git::run(command.as_str());
-        if notes.is_empty() {
+        if notes.is_none() {
             warn!("No release notes found for tag {}", tag_name);
-            continue;
+            continue
         }
-        if notes == "FAILED".to_string() {
-            error!("Failed to get release notes for tag {}", tag_name);
-            continue;
+        let bind_notes = notes.unwrap();
+        if bind_notes.is_empty() {
+            warn!("No release notes found for tag {}", tag_name);
+            continue
         }
         let mut desc = String::new();
-        for note in notes.trim_start_matches(tag_name).trim().split("\n") {
+        for note in bind_notes.trim_start_matches(tag_name).trim().split("\n") {
             desc.push_str(note)
         }
         let mut hashmap = HashMap::new();

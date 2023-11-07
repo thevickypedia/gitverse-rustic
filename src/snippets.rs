@@ -5,34 +5,34 @@ use log::{error, warn};
 
 use git;
 
-// todo: Currently in a broken state due to borrowed values
+fn generate_failed_hash() -> Vec<HashMap<String, String>> {
+    let mut snippet: Vec<HashMap<String, String>> = Vec::new();
+    let mut failed = HashMap::new();
+    failed.insert("status".to_string(), "failed".to_string());
+    snippet.push(failed);
+    return snippet;
+}
 
-pub fn generate() -> Vec<HashMap<& 'static str, & 'static str>> {
-    let mut snippet: Vec<HashMap<&str, &str>> = Vec::new();
+pub fn generate() -> Vec<HashMap<String, String>> {
     let dates_values = git::run("git tag --format '%(refname:short)||%(creatordate:format:%s)'");
     if dates_values.is_empty() {
         warn!("No tags found for repository!!");
-        let mut failed = HashMap::new();
-        failed.insert("status", "failed");
-        snippet.push(failed);
-        return snippet;
+        return generate_failed_hash();
     }
     if dates_values == "FAILED".to_string() {
-        let mut failed = HashMap::new();
-        failed.insert("status", "failed");
-        snippet.push(failed);
-        return snippet;
+        return generate_failed_hash();
     }
+    let mut snippet: Vec<HashMap<String, String>> = Vec::new();
     for line in dates_values.split("\n") {
+        if line.trim().is_empty() {
+            continue;
+        }
         let tag_line: Vec<&str> = line.trim().split("||").collect();
         let tag_name = tag_line[0];
         // todo: remove this conversion from here and add it at the end of snippets
         let _timestamp = tag_line[1].parse::<i64>().unwrap_or(0);
         if _timestamp == 0 {
-            let mut failed = HashMap::new();
-            failed.insert("status", "failed");
-            snippet.push(failed);
-            return snippet;
+            return generate_failed_hash();
         }
         let timestamp = tag_line[1];
         let datetime = NaiveDateTime::from_timestamp_opt(_timestamp, 0);
@@ -52,10 +52,10 @@ pub fn generate() -> Vec<HashMap<& 'static str, & 'static str>> {
             desc.push_str(note)
         }
         let mut hashmap = HashMap::new();
-        hashmap.insert("version", tag_name);
-        hashmap.insert("description", &desc);
-        hashmap.insert("timestamp", timestamp);
-        hashmap.insert("date", &date);
+        hashmap.insert("version".to_string(), tag_name.to_string());
+        hashmap.insert("description".to_string(), desc.to_string());
+        hashmap.insert("timestamp".to_string(), timestamp.to_string());
+        hashmap.insert("date".to_string(), date.to_string());
         snippet.push(hashmap);
     }
     return snippet;

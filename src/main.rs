@@ -27,5 +27,6 @@ fn main() {
     if pull == "FAILED".to_string() {
         log::warn!("Failed to git pull");
     }
-    snippets::generate();
+    let generated = snippets::generate();
+    println!("{:?}", generated)
 }

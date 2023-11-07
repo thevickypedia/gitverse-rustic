@@ -1,8 +1,13 @@
 extern crate chrono;
 extern crate log;
 extern crate reqwest;
+extern crate serde;
+extern crate serde_json;
 
 use std::env;
+
+use log::{info, warn};
+
 use parse::Config;
 use releases::get_api_releases;
 
@@ -19,17 +24,22 @@ fn generate_release_notes(config: Config) {
     }
     let fetch = git::run("git fetch origin refs/tags/*:refs/tags/* --prune");
     if fetch == "FAILED".to_string() {
-        log::warn!("Failed to fetch tags");
+        warn!("Failed to fetch tags");
     }
     let pull = git::run("git pull");
     if pull == "FAILED".to_string() {
-        log::warn!("Failed to git pull");
+        warn!("Failed to git pull");
     }
     let generated = snippets::generate();
     if generated[0].get("failed").is_some() {
         return;
     }
-    get_api_releases();
+    info!("Git tags gathered: {}", generated.len());
+    let release_api = get_api_releases();
+    info!("Release notes gathered: {}", release_api.len());
+    // for release in release_api {
+    //     println!("{:?}", release)
+    // }
 }
 
 fn main() {

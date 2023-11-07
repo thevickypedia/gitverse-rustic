@@ -3,8 +3,15 @@ use std::env;
 
 use log::{debug, error, warn};
 use reqwest;
+use serde::Deserialize;
 
 use git;
+
+#[derive(Deserialize)]
+struct JSONObject {
+    name: String,
+    body: String,
+}
 
 fn generate_failed_hash() -> HashMap<String, Vec<String>> {
     let mut hashmap = HashMap::new();
@@ -48,11 +55,21 @@ pub fn get_api_releases() -> HashMap<String, Vec<String>> {
     match response {
         Ok(result) => {
             let status = result.status();
-            if status.as_u16() == 200 {
-                // we need the keys, name and body (split by lines)
-                println!("{:?}", result.text())
+            if status.is_success() {
+                // todo: replace with match and return failed hash
+                let response_txt = result.text().expect("Failed to get response as text");
+                let parsed_response: Vec<JSONObject> = serde_json::from_str(&response_txt).expect("Failed to parse JSON");
+                let mut hashmap = HashMap::new();
+                for iter in parsed_response {
+                    let mut body = Vec::new();
+                    for line in iter.body.split("\n") {
+                        body.push(line.trim().to_string());
+                    }
+                    hashmap.insert(iter.name, body);
+                }
+                return hashmap;
             } else {
-                println!("Status::{}", status)
+                warn!("Failed to get releases. {}", status)
             }
         }
         Err(error) => {

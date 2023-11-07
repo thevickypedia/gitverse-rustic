@@ -1,4 +1,5 @@
 extern crate log;
+extern crate chrono;
 
 use std::env;
 

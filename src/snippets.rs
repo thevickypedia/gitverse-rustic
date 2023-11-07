@@ -5,10 +5,10 @@ use log::{error, warn};
 
 use git;
 
-fn generate_failed_hash() -> Vec<HashMap<String, String>> {
+fn generate_failed_vec() -> Vec<HashMap<String, String>> {
     let mut snippet: Vec<HashMap<String, String>> = Vec::new();
     let mut failed = HashMap::new();
-    failed.insert("status".to_string(), "failed".to_string());
+    failed.insert("failed".to_string(), "true".to_string());
     snippet.push(failed);
     return snippet;
 }
@@ -17,10 +17,10 @@ pub fn generate() -> Vec<HashMap<String, String>> {
     let dates_values = git::run("git tag --format '%(refname:short)||%(creatordate:format:%s)'");
     if dates_values.is_empty() {
         warn!("No tags found for repository!!");
-        return generate_failed_hash();
+        return generate_failed_vec();
     }
     if dates_values == "FAILED".to_string() {
-        return generate_failed_hash();
+        return generate_failed_vec();
     }
     let mut snippet: Vec<HashMap<String, String>> = Vec::new();
     for line in dates_values.split("\n") {
@@ -32,7 +32,8 @@ pub fn generate() -> Vec<HashMap<String, String>> {
         // todo: remove this conversion from here and add it at the end of snippets
         let _timestamp = tag_line[1].parse::<i64>().unwrap_or(0);
         if _timestamp == 0 {
-            return generate_failed_hash();
+            warn!("Invalid timestamp for tag {}", tag_name);
+            continue;
         }
         let timestamp = tag_line[1];
         let datetime = NaiveDateTime::from_timestamp_opt(_timestamp, 0);

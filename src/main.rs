@@ -1,19 +1,16 @@
-extern crate log;
 extern crate chrono;
+extern crate log;
 
 use std::env;
+use parse::Config;
+use releases::get_api_releases;
 
 mod parse;
 mod git;
 mod snippets;
+mod releases;
 
-fn main() {
-    let config = parse::arguments();
-    // todo: remove print statements
-    println!("Reverse: {}", config.reverse);
-    println!("Debug: {}", config.debug);
-    println!("Filename: {}", config.filename);
-    println!("Title: {}", config.title);
+fn generate_release_notes(config: Config) {
     // logger will be enabled only or debug mode
     if config.debug {
         env::set_var("RUST_LOG", "debug");
@@ -28,5 +25,13 @@ fn main() {
         log::warn!("Failed to git pull");
     }
     let generated = snippets::generate();
-    println!("{:?}", generated)
+    if generated[0].get("failed").is_some() {
+        return;
+    }
+    get_api_releases();
+}
+
+fn main() {
+    let config = parse::arguments();
+    generate_release_notes(config)
 }

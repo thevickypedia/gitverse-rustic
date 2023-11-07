@@ -13,6 +13,37 @@ struct JSONObject {
     body: String,
 }
 
+fn build_hashmap(parsed: Vec<JSONObject>) -> HashMap<String, Vec<String>> {
+    let mut hashmap = HashMap::new();
+    for iter in parsed {
+        let mut body = Vec::new();
+        for line in iter.body.split("\n") {
+            body.push(line.trim().to_string());
+        }
+        hashmap.insert(iter.name, body);
+    }
+    return hashmap;
+}
+
+fn parse_response(result: reqwest::blocking::Response) -> Option<HashMap<String, Vec<String>>> {
+    match result.text() {
+        Ok(resp) => {
+            match serde_json::from_str(&resp) {
+                Ok(parsed) => {
+                    return Some(build_hashmap(parsed));
+                }
+                Err(error_) => {
+                    error!("{}", error_);
+                }
+            }
+        }
+        Err(error_msg) => {
+            error!("{}", error_msg);
+        }
+    }
+    return None;
+}
+
 pub fn get_api_releases() -> Option<HashMap<String, Vec<String>>> {
     let origin = git::run(
         r"git config --get remote.origin.url | sed 's/.*\/\([^ ]*\/[^.]*\).*/\1/'"
@@ -44,43 +75,16 @@ pub fn get_api_releases() -> Option<HashMap<String, Vec<String>>> {
         warn!("Trying to collect release notes without github token");
     }
     let url = format!("https://api.github.com/repos/{}/{}/releases", owner, repo);
-    // todo: move this to a different function
     match client.build().unwrap().get(&url).send() {
         Ok(result) => {
             if result.status().is_success() {
-                match result.text() {
-                    Ok(resp) => {
-                        match serde_json::from_str(&resp) {
-                            Ok(parsed) => {
-                                let jsonified: Vec<JSONObject> = parsed;
-                                let mut hashmap = HashMap::new();
-                                for iter in jsonified {
-                                    let mut body = Vec::new();
-                                    for line in iter.body.split("\n") {
-                                        body.push(line.trim().to_string());
-                                    }
-                                    hashmap.insert(iter.name, body);
-                                }
-                                return Some(hashmap);
-                            }
-                            Err(error_) => {
-                                error!("{}", error_);
-                                return None;
-                            }
-                        }
-                    }
-                    Err(error_msg) => {
-                        error!("{}", error_msg);
-                        return None;
-                    }
-                }
+                return parse_response(result);
             } else {
                 warn!("Failed to get releases. {}", result.status())
             }
         }
         Err(error) => {
             error!("{}", error);
-            return None;
         }
     }
     return None;

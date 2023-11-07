@@ -1,5 +1,6 @@
 extern crate chrono;
 extern crate log;
+extern crate reqwest;
 
 use std::env;
 use parse::Config;

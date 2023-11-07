@@ -13,27 +13,20 @@ struct JSONObject {
     body: String,
 }
 
-fn generate_failed_hash() -> HashMap<String, Vec<String>> {
-    let mut hashmap = HashMap::new();
-    let vector = Vec::new();
-    hashmap.insert("failed".to_string(), vector);
-    return hashmap;
-}
-
-pub fn get_api_releases() -> HashMap<String, Vec<String>> {
+pub fn get_api_releases() -> Option<HashMap<String, Vec<String>>> {
     let origin = git::run(
         r"git config --get remote.origin.url | sed 's/.*\/\([^ ]*\/[^.]*\).*/\1/'"
     );
     if origin.is_empty() {
         warn!("Unable to get origin for current repository");
-        return generate_failed_hash();
+        return None;
     }
     if origin == "FAILED".to_string() {
-        return generate_failed_hash();
+        return None;
     }
     let origin_info: Vec<&str> = origin.trim().split("/").collect();
     if origin_info.len() != 2 {
-        return generate_failed_hash();
+        return None;
     }
     let owner = origin_info[0];
     let repo = origin_info[1];
@@ -51,31 +44,44 @@ pub fn get_api_releases() -> HashMap<String, Vec<String>> {
         warn!("Trying to collect release notes without github token");
     }
     let url = format!("https://api.github.com/repos/{}/{}/releases", owner, repo);
-    let response = client.build().unwrap().get(&url).send();
-    match response {
+    // todo: move this to a different function
+    match client.build().unwrap().get(&url).send() {
         Ok(result) => {
-            let status = result.status();
-            if status.is_success() {
-                // todo: replace with match and return failed hash
-                let response_txt = result.text().expect("Failed to get response as text");
-                let parsed_response: Vec<JSONObject> = serde_json::from_str(&response_txt).expect("Failed to parse JSON");
-                let mut hashmap = HashMap::new();
-                for iter in parsed_response {
-                    let mut body = Vec::new();
-                    for line in iter.body.split("\n") {
-                        body.push(line.trim().to_string());
+            if result.status().is_success() {
+                match result.text() {
+                    Ok(resp) => {
+                        match serde_json::from_str(&resp) {
+                            Ok(parsed) => {
+                                let jsonified: Vec<JSONObject> = parsed;
+                                let mut hashmap = HashMap::new();
+                                for iter in jsonified {
+                                    let mut body = Vec::new();
+                                    for line in iter.body.split("\n") {
+                                        body.push(line.trim().to_string());
+                                    }
+                                    hashmap.insert(iter.name, body);
+                                }
+                                return Some(hashmap);
+                            }
+                            Err(error_) => {
+                                error!("{}", error_);
+                                return None;
+                            }
+                        }
                     }
-                    hashmap.insert(iter.name, body);
+                    Err(error_msg) => {
+                        error!("{}", error_msg);
+                        return None;
+                    }
                 }
-                return hashmap;
             } else {
-                warn!("Failed to get releases. {}", status)
+                warn!("Failed to get releases. {}", result.status())
             }
         }
         Err(error) => {
             error!("{}", error);
-            return generate_failed_hash();
+            return None;
         }
     }
-    return generate_failed_hash();  // todo: be gone
+    return None;
 }

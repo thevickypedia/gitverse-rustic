@@ -6,7 +6,7 @@ extern crate serde_json;
 
 use std::env;
 
-use log::{info, warn};
+use log::{error, info, warn};
 
 use parse::Config;
 use releases::get_api_releases;
@@ -30,17 +30,17 @@ fn generate_release_notes(config: Config) {
     if pull == "FAILED".to_string() {
         warn!("Failed to git pull");
     }
-    let generated = snippets::generate();
-    if generated[0].get("failed").is_some() {
+    let generated = snippets::generate().unwrap();
+    if generated.is_empty() {
+        error!("Unable to generate release notes");
         return;
     }
     info!("Git tags gathered: {}", generated.len());
-    let release_api = get_api_releases();
-    if release_api.get("failed").is_some() {
-        return;
+    let release_api = get_api_releases().unwrap();
+    if !release_api.is_empty() {
+        info!("Release notes gathered: {}", release_api.len());
+        println!("{:?}", release_api)
     }
-    info!("Release notes gathered: {}", release_api.len());
-    println!("{:?}", release_api)
     // for release in release_api {
     //     println!("{:?}", release)
     // }

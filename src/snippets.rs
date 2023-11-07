@@ -13,14 +13,14 @@ fn generate_failed_vec() -> Vec<HashMap<String, String>> {
     return snippet;
 }
 
-pub fn generate() -> Vec<HashMap<String, String>> {
+pub fn generate() -> Option<Vec<HashMap<String, String>>> {
     let dates_values = git::run("git tag --format '%(refname:short)||%(creatordate:format:%s)'");
     if dates_values.is_empty() {
         warn!("No tags found for repository!!");
-        return generate_failed_vec();
+        return None;
     }
     if dates_values == "FAILED".to_string() {
-        return generate_failed_vec();
+        return None;
     }
     let mut snippet: Vec<HashMap<String, String>> = Vec::new();
     for line in dates_values.split("\n") {
@@ -30,6 +30,7 @@ pub fn generate() -> Vec<HashMap<String, String>> {
         let tag_line: Vec<&str> = line.trim().split("||").collect();
         let tag_name = tag_line[0];
         // todo: remove this conversion from here and add it at the end of snippets
+        // todo: check the snippet with empty snippet (does is_empty catch it?)
         let _timestamp = tag_line[1].parse::<i64>().unwrap_or(0);
         if _timestamp == 0 {
             warn!("Invalid timestamp for tag {}", tag_name);
@@ -59,5 +60,5 @@ pub fn generate() -> Vec<HashMap<String, String>> {
         hashmap.insert("date".to_string(), date.to_string());
         snippet.push(hashmap);
     }
-    return snippet;
+    return Some(snippet);
 }

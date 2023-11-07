@@ -30,20 +30,16 @@ fn generate_release_notes(config: Config) {
     if pull == "FAILED".to_string() {
         warn!("Failed to git pull");
     }
-    let generated = snippets::generate().unwrap();
-    if generated.is_empty() {
-        error!("Unable to generate release notes");
+    let tags = snippets::generate().unwrap();
+    if tags.is_empty() {
+        error!("Unable to fetch tags");
         return;
     }
-    info!("Git tags gathered: {}", generated.len());
+    info!("Git tags gathered: {}", tags.len());
     let release_api = get_api_releases().unwrap();
     if !release_api.is_empty() {
         info!("Release notes gathered: {}", release_api.len());
-        println!("{:?}", release_api)
     }
-    // for release in release_api {
-    //     println!("{:?}", release)
-    // }
 }
 
 fn main() {

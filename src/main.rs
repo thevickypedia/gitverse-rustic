@@ -36,7 +36,11 @@ fn generate_release_notes(config: Config) {
     }
     info!("Git tags gathered: {}", generated.len());
     let release_api = get_api_releases();
+    if release_api.get("failed").is_some() {
+        return;
+    }
     info!("Release notes gathered: {}", release_api.len());
+    println!("{:?}", release_api)
     // for release in release_api {
     //     println!("{:?}", release)
     // }

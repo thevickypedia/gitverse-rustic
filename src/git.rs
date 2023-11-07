@@ -20,12 +20,10 @@ pub fn run(command: &str) -> String {
             return stdout.to_string();
         }
         Some(code) => {
-            error!("Command failed with exit code: {}", code);
-            error!("Standard Output: {}", stdout);
-            error!("Standard Error: {}", stderr);
+            error!("Command '{}' failed with exit code: {}", command, code);
         }
         None => {
-            error!("Command failed, but couldn't retrieve exit code");
+            error!("Command '{}' failed, but couldn't retrieve exit code", command);
             error!("Standard Output: {}", stdout);
             error!("Standard Error: {}", stderr);
         }

@@ -9,6 +9,7 @@ pub fn run(command: &str) -> Option<String> {
         .stdout(Stdio::piped())  // Redirect stdout to /dev/null
         .stderr(Stdio::null())  // Redirect stderr to /dev/null
         .output();  // Capture both stdout and stderr
+    if command.ends_with("--prune") { return None }
     match result {
         Ok(ok) => {
             let stdout = String::from_utf8_lossy(&ok.stdout);

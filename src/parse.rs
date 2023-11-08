@@ -46,7 +46,8 @@ pub fn arguments() -> Config {
             "reverse" => {
                 reverse = true;
             }
-            "version" => {
+            // todo: try this out with executable (cargo command takes it as a flag for itself)
+            "version" | "-V" | "--version" => {
                 version = true;
             }
             "--filename" | "-f" => {

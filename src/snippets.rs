@@ -4,8 +4,14 @@ use serde_json::{Map, Value};
 
 use git;
 
-pub fn generate() -> Option<Vec<Map<String, Value>>> {
-    let dates_values = git::run("git tag --format '%(refname:short)||%(creatordate:format:%s)'");
+pub fn generate(reverse: bool) -> Option<Vec<Map<String, Value>>> {
+    let get_tags;
+    if reverse {
+        get_tags = "git for-each-ref --format '%(refname:short)||%(creatordate:format:%s)' --sort='-creatordate' refs/tags";
+    } else {
+        get_tags = "git for-each-ref --format '%(refname:short)||%(creatordate:format:%s)' --sort='creatordate' refs/tags";
+    }
+    let dates_values = git::run(get_tags);
     if dates_values.is_none() {
         return None;
     }
@@ -22,13 +28,12 @@ pub fn generate() -> Option<Vec<Map<String, Value>>> {
         let tag_line: Vec<&str> = line.trim().split("||").collect();
         let tag_name = tag_line[0];
         // todo: remove this conversion from here and add it at the end of snippets
-        let _timestamp = tag_line[1].parse::<i64>().unwrap_or(0);
-        if _timestamp == 0 {
+        let timestamp = tag_line[1].parse::<i64>().unwrap_or(0);
+        if timestamp == 0 {
             warn!("Invalid timestamp for tag {}", tag_name);
             continue;
         }
-        let timestamp = tag_line[1];
-        let datetime = NaiveDateTime::from_timestamp_opt(_timestamp, 0);
+        let datetime = NaiveDateTime::from_timestamp_opt(timestamp, 0);
         let date = datetime.unwrap().format("%m/%d/%Y").to_string();
         let command = format!("git tag -l -n99 {}", tag_name);
         let notes = git::run(command.as_str());
@@ -49,7 +54,7 @@ pub fn generate() -> Option<Vec<Map<String, Value>>> {
         let mut hashmap = Map::new();
         hashmap.insert("version".to_string(), Value::String(tag_name.to_string()));
         hashmap.insert("description".to_string(), Value::Array(vector));
-        hashmap.insert("timestamp".to_string(), Value::String(timestamp.to_string()));
+        hashmap.insert("timestamp".to_string(), Value::from(timestamp));
         hashmap.insert("date".to_string(), Value::String(date.to_string()));
         snippet.push(hashmap);
     }

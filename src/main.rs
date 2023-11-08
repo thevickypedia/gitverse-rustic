@@ -34,7 +34,7 @@ fn generate_release_notes(config: Config) {
     // Snippets are generated as Vec<Map<String, Value>> from serde
     // https://stackoverflow.com/a/39147207
     // This allows multiple types of in the same map (dict)
-    let tags = snippets::generate().unwrap();
+    let tags = snippets::generate(config.reverse).unwrap();
     if tags.is_empty() {
         error!("Unable to fetch tags");
         return;

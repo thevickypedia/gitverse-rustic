@@ -4,7 +4,7 @@ use serde_json::{Map, Value};
 
 use git;
 
-pub fn generate(reverse: bool) -> Option<Vec<Map<String, Value>>> {
+pub fn get(reverse: bool) -> Option<Vec<Map<String, Value>>> {
     let get_tags;
     if reverse {
         get_tags = "git for-each-ref --format '%(refname:short)||%(creatordate:format:%s)' --sort='-creatordate' refs/tags";

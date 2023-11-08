@@ -44,7 +44,7 @@ fn parse_response(result: reqwest::blocking::Response) -> Option<HashMap<String,
     return None;
 }
 
-pub fn get_api_releases() -> Option<HashMap<String, Vec<String>>> {
+pub fn get() -> Option<HashMap<String, Vec<String>>> {
     let origin = git::run(
         r"git config --get remote.origin.url | sed 's/.*\/\([^ ]*\/[^.]*\).*/\1/'"
     );

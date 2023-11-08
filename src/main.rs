@@ -10,11 +10,10 @@ use log::{error, info, warn};
 use serde_json::Value;
 
 use parse::Config;
-use releases::get_api_releases;
 
 mod parse;
 mod git;
-mod snippets;
+mod tags;
 mod releases;
 
 fn generate_release_notes(config: Config) {
@@ -34,19 +33,19 @@ fn generate_release_notes(config: Config) {
     // Snippets are generated as Vec<Map<String, Value>> from serde
     // https://stackoverflow.com/a/39147207
     // This allows multiple types of in the same map (dict)
-    let tags = snippets::generate(config.reverse).unwrap();
-    if tags.is_empty() {
+    let tag_notes = tags::get(config.reverse).unwrap();
+    if tag_notes.is_empty() {
         error!("Unable to fetch tags");
         return;
     }
-    info!("Git tags gathered: {}", tags.len());
-    let release_api = get_api_releases();
+    info!("Git tags gathered: {}", tag_notes.len());
+    let release_notes = releases::get();
     let mut updated_tags = Vec::new();
-    if !release_api.is_none() {
-        let bind_release_api = release_api.unwrap();
+    if !release_notes.is_none() {
+        let bind_release_api = release_notes.unwrap();
         if !bind_release_api.is_empty() {
             info!("Release notes gathered: {}", bind_release_api.len());
-            for mut tag in tags.clone() {
+            for mut tag in tag_notes.clone() {
                 let tag_version = tag.get("version").unwrap().as_str().unwrap();
                 let api_desc = bind_release_api.get(tag_version);
                 // Check if the release version and tag name are the same
@@ -65,7 +64,7 @@ fn generate_release_notes(config: Config) {
             }
         }
     }
-    let snippet_draft = if updated_tags.is_empty() { tags } else { updated_tags };
+    let snippet_draft = if updated_tags.is_empty() { tag_notes } else { updated_tags };
     println!("{:?}", snippet_draft)
 }
 

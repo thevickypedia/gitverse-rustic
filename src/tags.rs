@@ -27,7 +27,6 @@ pub fn get(reverse: bool) -> Option<Vec<Map<String, Value>>> {
         }
         let tag_line: Vec<&str> = line.trim().split("||").collect();
         let tag_name = tag_line[0];
-        // todo: remove this conversion from here and add it at the end of snippets
         let timestamp = tag_line[1].parse::<i64>().unwrap_or(0);
         if timestamp == 0 {
             warn!("Invalid timestamp for tag {}", tag_name);

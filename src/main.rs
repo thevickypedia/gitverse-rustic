@@ -7,6 +7,7 @@ extern crate serde_json;
 use std::env;
 
 use log::{error, info, warn};
+use serde_json::Value;
 
 use parse::Config;
 use releases::get_api_releases;
@@ -30,16 +31,42 @@ fn generate_release_notes(config: Config) {
     if pull.is_none() {
         warn!("Failed to git pull");
     }
+    // Snippets are generated as Vec<Map<String, Value>> from serde
+    // https://stackoverflow.com/a/39147207
+    // This allows multiple types of in the same map (dict)
     let tags = snippets::generate().unwrap();
     if tags.is_empty() {
         error!("Unable to fetch tags");
         return;
     }
     info!("Git tags gathered: {}", tags.len());
-    let release_api = get_api_releases().unwrap();
-    if !release_api.is_empty() {
-        info!("Release notes gathered: {}", release_api.len());
+    let release_api = get_api_releases();
+    let mut updated_tags = Vec::new();
+    if !release_api.is_none() {
+        let bind_release_api = release_api.unwrap();
+        if !bind_release_api.is_empty() {
+            info!("Release notes gathered: {}", bind_release_api.len());
+            for mut tag in tags.clone() {
+                let tag_version = tag.get("version").unwrap().as_str().unwrap();
+                let api_desc = bind_release_api.get(tag_version);
+                // Check if the release version and tag name are the same
+                if api_desc.is_some() {
+                    let bind_api_desc = api_desc.unwrap();
+                    let mut description = vec![];
+                    for desc in bind_api_desc {
+                        description.push(Value::String(desc.to_string()))
+                    }
+                    // Update value of key 'tag_version'
+                    tag.insert(tag_version.to_string(), Value::Array(description));
+                } else {
+                    warn!("Tag name: '{}' could not be found in releases", tag_version)
+                }
+                updated_tags.push(tag)
+            }
+        }
     }
+    let snippet_draft = if updated_tags.is_empty() { tags } else { updated_tags };
+    println!("{:?}", snippet_draft)
 }
 
 fn main() {

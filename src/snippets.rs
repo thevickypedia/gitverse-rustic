@@ -1,11 +1,10 @@
-use std::collections::HashMap;
-
 use chrono::NaiveDateTime;
 use log::warn;
+use serde_json::{Map, Value};
 
 use git;
 
-pub fn generate() -> Option<Vec<HashMap<String, String>>> {
+pub fn generate() -> Option<Vec<Map<String, Value>>> {
     let dates_values = git::run("git tag --format '%(refname:short)||%(creatordate:format:%s)'");
     if dates_values.is_none() {
         return None;
@@ -15,7 +14,7 @@ pub fn generate() -> Option<Vec<HashMap<String, String>>> {
         warn!("No tags found for repository!!");
         return None;
     }
-    let mut snippet: Vec<HashMap<String, String>> = Vec::new();
+    let mut snippet: Vec<Map<String, Value>> = Vec::new();
     for line in bind_date_values.split("\n") {
         if line.trim().is_empty() {
             continue;
@@ -35,22 +34,23 @@ pub fn generate() -> Option<Vec<HashMap<String, String>>> {
         let notes = git::run(command.as_str());
         if notes.is_none() {
             warn!("No release notes found for tag {}", tag_name);
-            continue
+            continue;
         }
         let bind_notes = notes.unwrap();
         if bind_notes.is_empty() {
             warn!("No release notes found for tag {}", tag_name);
-            continue
+            continue;
         }
-        let mut desc = String::new();
+        // vector's implementation: https://stackoverflow.com/a/39147207
+        let mut vector = vec![];
         for note in bind_notes.trim_start_matches(tag_name).trim().split("\n") {
-            desc.push_str(note)
+            vector.push(Value::String(note.to_string()));
         }
-        let mut hashmap = HashMap::new();
-        hashmap.insert("version".to_string(), tag_name.to_string());
-        hashmap.insert("description".to_string(), desc.to_string());
-        hashmap.insert("timestamp".to_string(), timestamp.to_string());
-        hashmap.insert("date".to_string(), date.to_string());
+        let mut hashmap = Map::new();
+        hashmap.insert("version".to_string(), Value::String(tag_name.to_string()));
+        hashmap.insert("description".to_string(), Value::Array(vector));
+        hashmap.insert("timestamp".to_string(), Value::String(timestamp.to_string()));
+        hashmap.insert("date".to_string(), Value::String(date.to_string()));
         snippet.push(hashmap);
     }
     return Some(snippet);

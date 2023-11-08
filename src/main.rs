@@ -21,7 +21,7 @@ mod fileio;
 fn main() {
     let start = Instant::now();
     let config = parse::arguments();
-    // logger will be enabled only or debug mode
+    // logger will be enabled only for debug mode
     if config.debug {
         env::set_var("RUST_LOG", "debug");
         env_logger::init();

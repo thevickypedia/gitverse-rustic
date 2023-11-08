@@ -18,7 +18,7 @@ pub fn generate_snippets(reverse: bool) -> Vec<String> {
         let mut description: Vec<String> = vec![];
         for desc in each_tag.get("description").unwrap().as_array().unwrap() {
             let desc_str = desc.as_str().unwrap();
-            if desc_str.starts_with("-") {
+            if desc_str.starts_with('-') {
                 description.push(desc_str.to_string())
             } else {
                 description.push(format!("- {}", desc_str))
@@ -28,5 +28,5 @@ pub fn generate_snippets(reverse: bool) -> Vec<String> {
         let line = format!("{}\n{}\n{}\n", line1, line2, line3);
         snippets.push(line);
     }
-    return snippets;
+    snippets
 }

@@ -6,7 +6,7 @@ use std::process::exit;
 use log::{info, warn};
 
 fn write_file(filename: &str, title: &str, snippets: Vec<String>) -> Result<usize, Error> {
-    let mut file = File::create(&filename)?;
+    let mut file = File::create(filename)?;
     // write_all is safer but it returns an empty tuple () instead of usize
     let init = format!("{}\n{}\n\n", title, "=".repeat(title.len()));
     let mut bytes = file.write(init.as_bytes())?;

@@ -34,5 +34,5 @@ pub fn run(command: &str) -> Option<String> {
             error!("{}", error);
         }
     }
-    return None;
+    None
 }

@@ -12,16 +12,14 @@ pub fn get(reverse: bool) -> Option<Vec<Map<String, Value>>> {
         get_tags = "git for-each-ref --format '%(refname:short)||%(creatordate:format:%s)' --sort='creatordate' refs/tags";
     }
     let dates_values = git::run(get_tags);
-    if dates_values.is_none() {
-        return None;
-    }
+    dates_values.as_ref()?;
     let bind_date_values = dates_values.unwrap();
     if bind_date_values.is_empty() {
         warn!("No tags found for repository!!");
         return None;
     }
     let mut snippet: Vec<Map<String, Value>> = Vec::new();
-    for line in bind_date_values.split("\n") {
+    for line in bind_date_values.split('\n') {
         if line.trim().is_empty() {
             continue;
         }
@@ -47,7 +45,7 @@ pub fn get(reverse: bool) -> Option<Vec<Map<String, Value>>> {
         }
         // vector's implementation: https://stackoverflow.com/a/39147207
         let mut vector = vec![];
-        for note in bind_notes.trim_start_matches(tag_name).trim().split("\n") {
+        for note in bind_notes.trim_start_matches(tag_name).trim().split('\n') {
             vector.push(Value::String(note.to_string()));
         }
         let mut hashmap = Map::new();
@@ -57,5 +55,5 @@ pub fn get(reverse: bool) -> Option<Vec<Map<String, Value>>> {
         hashmap.insert("date".to_string(), Value::String(date.to_string()));
         snippet.push(hashmap);
     }
-    return Some(snippet);
+    Some(snippet)
 }

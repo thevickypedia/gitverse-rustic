@@ -22,7 +22,7 @@ pub fn generator(reverse: bool) -> Option<Vec<Map<String, Value>>> {
     }
     info!("Git tags gathered: {}", tag_notes.len());
     let release_notes = releases::get();
-    if !release_notes.is_some() { return Some(tag_notes); }
+    if release_notes.is_none() { return Some(tag_notes); }
     let mut updated_tags = Vec::new();
     let bind_release_api = release_notes.unwrap();
     info!("Release notes gathered: {}", bind_release_api.len());
@@ -44,5 +44,5 @@ pub fn generator(reverse: bool) -> Option<Vec<Map<String, Value>>> {
         }
         updated_tags.push(tag)
     }
-    return if updated_tags.is_empty() { Some(tag_notes) } else { Some(updated_tags) };
+    if updated_tags.is_empty() { Some(tag_notes) } else { Some(updated_tags) }
 }

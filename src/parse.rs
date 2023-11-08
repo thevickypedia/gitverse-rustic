@@ -23,7 +23,7 @@ pub fn arguments() -> Config {
         " ".repeat(6), " ".repeat(8), " ".repeat(8),
         " ".repeat(7), " ".repeat(10)
     );
-    if args.len() < 1 {
+    if args.is_empty() {
         // If no arguments are provided, display usage instructions
         println!("Usage: {} [OPTIONS]\n\n{}", args[0], usage);
         exit(1)
@@ -46,7 +46,7 @@ pub fn arguments() -> Config {
             "reverse" => {
                 reverse = true;
             }
-            "version" | "-V" | "-v" | "--version" => {
+            "-V" | "-v" | "--version" => {
                 version = true;
             }
             "--filename" | "-f" => {
@@ -86,11 +86,11 @@ pub fn arguments() -> Config {
     if title.is_empty() {
         title = "Release Notes".to_string()
     }
-    let config = Config {
+    
+    Config {
         reverse,
         debug,
         filename,
         title
-    };
-    return config;
+    }
 }

@@ -17,12 +17,12 @@ fn build_hashmap(parsed: Vec<JSONObject>) -> HashMap<String, Vec<String>> {
     let mut hashmap = HashMap::new();
     for iter in parsed {
         let mut body = Vec::new();
-        for line in iter.body.split("\n") {
+        for line in iter.body.split('\n') {
             body.push(line.trim().to_string());
         }
         hashmap.insert(iter.name, body);
     }
-    return hashmap;
+    hashmap
 }
 
 fn parse_response(result: reqwest::blocking::Response) -> Option<HashMap<String, Vec<String>>> {
@@ -41,22 +41,20 @@ fn parse_response(result: reqwest::blocking::Response) -> Option<HashMap<String,
             error!("{}", error_msg);
         }
     }
-    return None;
+    None
 }
 
 pub fn get() -> Option<HashMap<String, Vec<String>>> {
     let origin = git::run(
         r"git config --get remote.origin.url | sed 's/.*\/\([^ ]*\/[^.]*\).*/\1/'"
     );
-    if origin.is_none() {
-        return None;
-    }
+    origin.as_ref()?;
     let bind_origin = origin.unwrap();
     if bind_origin.is_empty() {
         warn!("Unable to get origin for current repository");
         return None;
     }
-    let origin_info: Vec<&str> = bind_origin.trim().split("/").collect();
+    let origin_info: Vec<&str> = bind_origin.trim().split('/').collect();
     if origin_info.len() != 2 {
         return None;
     }
@@ -76,7 +74,7 @@ pub fn get() -> Option<HashMap<String, Vec<String>>> {
         warn!("Trying to collect release notes without github token");
     }
     let url = format!("https://api.github.com/repos/{}/{}/releases", owner, repo);
-    match client.build().unwrap().get(&url).send() {
+    match client.build().unwrap().get(url).send() {
         Ok(result) => {
             if result.status().is_success() {
                 return parse_response(result);
@@ -88,5 +86,5 @@ pub fn get() -> Option<HashMap<String, Vec<String>>> {
             error!("{}", error);
         }
     }
-    return None;
+    None
 }

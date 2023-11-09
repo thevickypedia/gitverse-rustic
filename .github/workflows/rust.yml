@@ -10,12 +10,8 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  build_and_test:
+  build:
     runs-on: ubuntu-latest
-    outputs:
-      release: ${{ steps.setter.outputs.release }}
-      pkg_name: ${{ steps.setter.outputs.pkg_name }}
-      asset_name: ${{ steps.setter.outputs.asset_name }}
     steps:
       - uses: actions/checkout@v3
       - name: Get Package Name
@@ -48,6 +44,7 @@ jobs:
           else
             cargo build --verbose
           fi
+        shell: bash
       - name: Run tests
         run: |
           if [ "${{ env.release }}" == "true" ]; then
@@ -55,29 +52,18 @@ jobs:
           else
             cargo test --verbose
           fi
-      - uses: actions/upload-artifact@v3
+        shell: bash
+      - name: Copy Compiled Executable
         if: env.release == 'true'
-        with:
-          name: arty-binary
-          path: target/*
-      - name: Set outputs
-        id: setter
         run: |
-          echo "release=${{ env.release }}" >> $GITHUB_OUTPUT
-          echo "pkg_name=${{ env.pkg_name }}" >> $GITHUB_OUTPUT
-          echo "asset_name=${{ env.asset_name }}" >> $GITHUB_OUTPUT
-  release:
-    needs: build_and_test
-    runs-on: ubuntu-latest
-    outputs:
-      release_id: ${{ steps.setter.outputs.release_id }}
-    steps:
-      - uses: actions/checkout@v3
-      - name: Load env vars
-        run: |
-          echo release=${{needs.build_and_test.outputs.release}} >> $GITHUB_ENV
-          echo pkg_name=${{needs.build_and_test.outputs.pkg_name}} >> $GITHUB_ENV
-          echo asset_name=${{needs.build_and_test.outputs.asset_name}} >> $GITHUB_ENV
+          src_dir="target/release"
+          if [ -f "$src_dir/${{ env.pkg_name }}" ]; then
+            cp "$src_dir/${{ env.pkg_name }}" "${{ env.asset_name }}"
+            echo "Copied '${{ env.pkg_name }}' as '${{ env.asset_name }}' to $(pwd)"
+          else
+            echo "The file ${{ env.pkg_name }} does not exist in $src_dir."
+          fi
+        shell: bash
       - name: Create New Release
         if: env.release == 'true'
         run: |
@@ -100,37 +86,6 @@ jobs:
           echo "Release ID: $release_id"
           echo "release_id=$release_id" >> $GITHUB_ENV
         shell: bash
-      - name: Set outputs
-        id: setter
-        run: echo "release_id=${{ env.release_id }}" >> $GITHUB_OUTPUT
-  upload_artifact:
-    needs:
-      - build_and_test
-      - release
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - name: Load env vars
-        run: |
-          echo release_id=${{needs.release.outputs.release_id}} >> $GITHUB_ENV
-          echo release=${{needs.build_and_test.outputs.release}} >> $GITHUB_ENV
-          echo asset_name=${{needs.build_and_test.outputs.asset_name}} >> $GITHUB_ENV
-      - uses: actions/download-artifact@v3
-        if: env.release == 'true'
-        with:
-          name: arty-binary
-          path: target/*
-      - name: Copy Compiled Executable
-        if: env.release == 'true'
-        run: |
-          src_dir="target/release"
-          if [ -f "$src_dir/${{ env.pkg_name }}" ]; then
-            cp "$src_dir/${{ env.pkg_name }}" "${{ env.asset_name }}"
-            echo "Copied '${{ env.pkg_name }}' as '${{ env.asset_name }}' to $(pwd)"
-          else
-            echo "The file ${{ env.pkg_name }} does not exist in $src_dir."
-          fi
-        shell: bash
       - name: Upload Asset to Release
         if: env.release == 'true'
         run: |
@@ -139,19 +94,6 @@ jobs:
           --data-binary @"${{ env.asset_name }}" \
           "https://uploads.github.com/repos/${{ github.repository }}/releases/${{ env.release_id }}/assets?name=${{ env.asset_name }}"
         shell: bash
-  publish_crate:
-    needs: build_and_test
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - name: Load env vars
-        run: |
-          echo release=${{needs.build_and_test.outputs.release}} >> $GITHUB_ENV
-      - uses: actions/download-artifact@v3
-        if: env.release == 'true'
-        with:
-          name: arty-binary
-          path: target/*
       - name: Release Crate
         if: env.release == 'true'
         run: |

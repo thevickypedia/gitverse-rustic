@@ -17,7 +17,10 @@ Rustic version of [GitVerse][3]
 
 ## Usage
 
-https://github.com/thevickypedia/gitverse-rustic/releases/latest/download/asset_gitverse
+#### Download Executable
+```shell
+curl -o asset -LH "Accept: application/octet-stream" "https://github.com/thevickypedia/gitverse-rustic/releases/latest/download/asset_gitverse"
+```
 
 #### Arguments
 - `debug` - Enable on screen logging

@@ -12,6 +12,10 @@ env:
 jobs:
   build_and_test:
     runs-on: ubuntu-latest
+    outputs:
+      release: ${{ steps.setter.outputs.release }}
+      pkg_name: ${{ steps.setter.outputs.pkg_name }}
+      asset_name: ${{ steps.setter.outputs.asset_name }}
     steps:
       - uses: actions/checkout@v3
       - name: Get Package Name
@@ -51,12 +55,26 @@ jobs:
           else
             cargo test --verbose
           fi
+      - name: Set outputs
+        id: setter
+        run: |
+          echo "release=${{ env.release }}" >> $GITHUB_OUTPUT
+          echo "pkg_name=${{ env.pkg_name }}" >> $GITHUB_OUTPUT
+          echo "asset_name=${{ env.asset_name }}" >> $GITHUB_OUTPUT
   release:
     needs: build_and_test
     runs-on: ubuntu-latest
+    outputs:
+      release_id: ${{ steps.setter.outputs.release_id }}
     steps:
+      - name: Load env vars
+        run: |
+          echo release=${{needs.build_and_test.outputs.release}} >> $GITHUB_ENV
+          echo pkg_name=${{needs.build_and_test.outputs.pkg_name}} >> $GITHUB_ENV
+          echo asset_name=${{needs.build_and_test.outputs.asset_name}} >> $GITHUB_ENV
       - name: Copy Compiled Executable
         if: env.release == 'true'
+        # todo: check if asset name works without wrapping with {}
         run: |
           src_dir="target/release"
           if [ -f "$src_dir/${{ env.pkg_name }}" ]; then
@@ -88,13 +106,22 @@ jobs:
           echo "Release ID: $release_id"
           echo "release_id=$release_id" >> $GITHUB_ENV
         shell: bash
+      - name: Set outputs
+        id: setter
+        run: echo "release_id=${{ env.release_id }}" >> $GITHUB_OUTPUT
   upload_artifact:
     needs:
       - build_and_test
       - release
     runs-on: ubuntu-latest
     steps:
+      - name: Load env vars
+        run: |
+          echo release_id=${{needs.release.outputs.release_id}} >> $GITHUB_ENV
+          echo release=${{needs.build_and_test.outputs.release}} >> $GITHUB_ENV
+          echo asset_name=${{needs.build_and_test.outputs.asset_name}} >> $GITHUB_ENV
       - name: Upload Asset to Release
+        # todo: check if asset name works without wrapping with {}
         if: env.release == 'true'
         run: |
           curl -X POST -H "Authorization: token ${{ secrets.GIT_TOKEN }}" \
@@ -106,6 +133,9 @@ jobs:
     needs: build_and_test
     runs-on: ubuntu-latest
     steps:
+      - name: Load env vars
+        run: |
+          echo release=${{needs.build_and_test.outputs.release}} >> $GITHUB_ENV
       - name: Release Crate
         if: env.release == 'true'
         run: |

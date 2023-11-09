@@ -10,7 +10,7 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  build:
+  build_and_test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -51,6 +51,10 @@ jobs:
           else
             cargo test --verbose
           fi
+  release:
+    needs: build_and_test
+    runs-on: ubuntu-latest
+    steps:
       - name: Copy Compiled Executable
         if: env.release == 'true'
         run: |
@@ -84,6 +88,12 @@ jobs:
           echo "Release ID: $release_id"
           echo "release_id=$release_id" >> $GITHUB_ENV
         shell: bash
+  upload_artifact:
+    needs:
+      - build_and_test
+      - release
+    runs-on: ubuntu-latest
+    steps:
       - name: Upload Asset to Release
         if: env.release == 'true'
         run: |
@@ -92,6 +102,10 @@ jobs:
           --data-binary @"$asset_name" \
           "https://uploads.github.com/repos/${{ github.repository }}/releases/${{ env.release_id }}/assets?name=$asset_name"
         shell: bash
+  publish_crate:
+    needs: build_and_test
+    runs-on: ubuntu-latest
+    steps:
       - name: Release Crate
         if: env.release == 'true'
         run: |

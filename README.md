@@ -15,6 +15,10 @@ Rustic version of [GitVerse][3]
 - Organize the release notes in either straight or reverse order
   - Requires tag names and release titles to be the same
 
+## Usage
+
+https://github.com/thevickypedia/gitverse-rustic/releases/latest/download/asset_gitverse
+
 #### Arguments
 - `debug` - Enable on screen logging
 - `reverse` - Generate release notes in reverse mode _(last release first)_

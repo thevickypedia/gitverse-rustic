@@ -1,17 +1,17 @@
 # https://doc.rust-lang.org/cargo/getting-started/first-steps.html#first-steps-with-cargo
 [package]
 name = "gitverse"
-version = "0.0.1-alpha"
+version = "0.0.1-beta"
 description = "Rustic implementation of GitVerse"
 license = "MIT"
 documentation = "https://thevickypedia.github.io/gitverse"
 homepage = "https://github.com/thevickypedia/gitverse-rustic"
 repository = "https://github.com/thevickypedia/gitverse-rustic"
 
-# For local debug purpose
-[[bin]]
-name = "git"
-path = "src/main.rs"
+# # For local debug purpose
+#[[bin]]
+#name = "git"
+#path = "src/main.rs"
 
 [dependencies]
 log = "0.4.20"

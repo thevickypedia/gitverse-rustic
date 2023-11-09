@@ -57,7 +57,7 @@ jobs:
           fi
       - uses: actions/upload-artifact@v3
         with:
-          name: arty-upload
+          name: arty-binary
           path: target/*
       - name: Set outputs
         id: setter
@@ -111,7 +111,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/download-artifact@v3
         with:
-          name: arty-download
+          name: arty-binary
           path: target/*
       - name: Load env vars
         # todo: check if asset name works without wrapping with {}
@@ -145,7 +145,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/download-artifact@v3
         with:
-          name: arty-download
+          name: arty-binary
           path: target/*
       - name: Load env vars
         run: |

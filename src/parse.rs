@@ -29,6 +29,7 @@ pub fn arguments() -> Config {
         exit(1)
     }
 
+    let mut help = false;
     let mut debug = false;
     let mut reverse = false;
 
@@ -40,6 +41,9 @@ pub fn arguments() -> Config {
     let mut i = 1; // Start from the second argument (args[0] is the program name).
     while i < args.len() {
         match args[i].as_str() {
+            "--help" => {
+                help = true;
+            }
             "debug" => {
                 debug = true;
             }
@@ -73,6 +77,17 @@ pub fn arguments() -> Config {
             }
         }
         i += 1;
+    }
+    if help {
+        let mut response = String::new();
+        response.push_str("Help:\n\n");
+        response.push_str("\tdebug: Enable on screen logging\n");
+        response.push_str("\treverse: Generate release notes in reverse mode (last release first)\n");
+        response.push_str("\t--filename / -f: Filename for release notes to be stored in\n");
+        response.push_str("\t--title / -t: Title for the release notes\n");
+        response.push_str("\t--help: Print this message and exit\n\n");
+        println!("{}", response);
+        exit(0)
     }
     if version {
         const PKG_NAME: &str = env!("CARGO_PKG_NAME");

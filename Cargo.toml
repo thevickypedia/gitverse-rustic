@@ -1,7 +1,7 @@
 # https://doc.rust-lang.org/cargo/getting-started/first-steps.html#first-steps-with-cargo
 [package]
 name = "gitverse"
-version = "0.0.1"
+version = "0.0.2"
 description = "Rustic implementation of GitVerse"
 license = "MIT"
 documentation = "https://thevickypedia.github.io/gitverse"
